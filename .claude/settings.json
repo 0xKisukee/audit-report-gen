@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/kisuke/cyfrin-tuto/2026-03-NFT-dealers/fuzz755/**)"
+    ]
+  }
+}

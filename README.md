@@ -115,7 +115,7 @@ affected-contracts: PuppyRaffle.sol
 
 | Field                | Required | Values                                                                        |
 |----------------------|----------|-------------------------------------------------------------------------------|
-| `severity`           | Yes      | `[H-1]`, `[M-2]`, `[L-3]`, `[I-1]`, `[G-1]` — code + number in brackets    |
+| `severity`           | Yes      | `[H-1]`, `[M-2]`, `[L-3]`, `[I-1]`, `[G-1]` — code + number in brackets      |
 | `status`             | No       | `Pending` (default), `Fixed`, `Acknowledged`, `Won't Fix`                    |
 | `affected-contracts` | No       | Free text, e.g. `PuppyRaffle.sol, ReentrancyGuard.sol`                       |
 

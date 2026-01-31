@@ -64,7 +64,6 @@ const STATUS_CONFIG = {
   'Fixed':           { color: '#1e8449', bg: '#eefbf3' },
   'Acknowledged':    { color: '#2980b9', bg: '#eef5fb' },
   "Won't Fix":       { color: '#5d6d7e', bg: '#f5f6fa' },
-  'Partially Fixed': { color: '#e67e22', bg: '#fef6ed' },
   'Pending':         { color: '#e67e22', bg: '#fef6ed' },
 };
 

@@ -102,15 +102,29 @@ my-audit/
 
 ## findings.md — Finding Format
 
-Findings are separated by `---` on its own line. Each finding has an **optional YAML frontmatter block** followed by a heading.
+Each finding is a YAML frontmatter block followed by its markdown content. Findings in a single `findings.md` file are separated by the start of the next finding's `---` frontmatter block.
 
-### Heading format
+### YAML Frontmatter (required)
 
+Every finding must start with a frontmatter block:
+
+```yaml
+---
+severity: [H-1]
+status: Fixed
+affected-contracts: PuppyRaffle.sol
+---
 ```
-### [SEVERITY-NUMBER] Title of the Finding
-```
 
-Supported severity codes:
+**Frontmatter fields:**
+
+| Field                | Required | Values                                                                        |
+|----------------------|----------|-------------------------------------------------------------------------------|
+| `severity`           | Yes      | `[H-1]`, `[M-2]`, `[L-3]`, `[I-1]`, `[G-1]` — code + number in brackets    |
+| `status`             | No       | `Pending` (default), `Fixed`, `Acknowledged`, `Won't Fix`, `Partially Fixed` |
+| `affected-contracts` | No       | Free text, e.g. `PuppyRaffle.sol, ReentrancyGuard.sol`                       |
+
+**Severity codes:**
 
 | Code | Severity      |
 |------|---------------|
@@ -120,57 +134,41 @@ Supported severity codes:
 | `I`  | Informational |
 | `G`  | Gas           |
 
-### YAML Frontmatter (optional)
+### Title
 
-Add a `---` block before the heading to specify per-finding metadata:
-
-```yaml
----
-status: Fixed
-affected-contracts: PuppyRaffle.sol
----
-### [H-1] Title of the finding
-```
-
-**Supported frontmatter fields:**
-
-| Field                | Values                                                       |
-|----------------------|--------------------------------------------------------------|
-| `status`             | `Pending` (default), `Fixed`, `Acknowledged`, `Won't Fix`, `Partially Fixed` |
-| `affected-contracts` | Free text, e.g. `PuppyRaffle.sol, ReentrancyGuard.sol`      |
-
-The `status` field drives the badge shown in both the findings summary table and on each individual finding card.
+The finding title is the **first bold line** in the body, written as `**Title text here**` on its own line. It will be shown in the finding card header and the summary table.
 
 ### Sub-section headings (auto-detected)
 
-The following sub-section names are automatically detected and rendered as styled labels inside each finding. Use them either as **markdown headings** (`### Description`) or as **bold paragraphs** (`**Description:**`):
+The following sub-section names are automatically detected and rendered as styled labels. Use them as **bold paragraphs** (`**Description:**`) or **markdown headings** (`### Description`):
 
-| Label                   | Style  |
-|-------------------------|--------|
-| `Description`           | Blue   |
-| `Detailed Description`  | Blue   |
-| `Impact`                | Red    |
-| `Root Cause`            | Yellow |
-| `Proof of Concept`      | Purple |
-| `PoC`                   | Purple |
-| `Recommended Mitigation`| Green  |
-| `Mitigation`            | Green  |
-| `Recommendation`        | Green  |
-| `Acknowledgement`       | Gray   |
-| `Acknowledgment`        | Gray   |
+| Label                    | Style  |
+|--------------------------|--------|
+| `Description`            | Blue   |
+| `Detailed Description`   | Blue   |
+| `Impact`                 | Red    |
+| `Root Cause`             | Yellow |
+| `Proof of Concept`       | Purple |
+| `PoC`                    | Purple |
+| `Recommended Mitigation` | Green  |
+| `Mitigation`             | Green  |
+| `Recommendation`         | Green  |
+| `Acknowledgement`        | Gray   |
+| `Acknowledgment`         | Gray   |
 
 ### Complete finding example
 
 ```markdown
 ---
+severity: [H-1]
 status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
-### [H-1] Reentrancy in `refund` allows attacker to drain funds
+**Reentrancy in `refund` allows attacker to drain the contract**
 
 **Description:**
 
-The `refund` function sends ETH before zeroing the player slot...
+The `refund` function sends ETH to `msg.sender` before zeroing the player slot...
 
 **Impact:**
 
@@ -179,13 +177,9 @@ An attacker can drain the entire contract balance.
 **Proof of Concept:**
 
 ```solidity
-// attacker contract
-function attack() external {
-    puppyRaffle.refund(index);
-}
 fallback() external payable {
     if (address(puppyRaffle).balance > 0) {
-        puppyRaffle.refund(index);
+        puppyRaffle.refund(attackerIndex);
     }
 }
 ```
@@ -198,14 +192,20 @@ Apply the Checks-Effects-Interactions pattern:
     players[playerIndex] = address(0);
 +   payable(msg.sender).sendValue(entranceFee);
 ```
-
 ---
-### [M-1] Next finding starts here...
+severity: [M-1]
+status: Pending
+---
+**Next finding title here**
+
+...
 ```
+
+> The `---` that separates findings doubles as the opening of the next finding's frontmatter block. No extra separator line is needed.
 
 ### Using a `findings/` directory instead
 
-Instead of a single `findings.md`, you can create one file per finding in a `findings/` subdirectory:
+Create one `.md` file per finding in a `findings/` subdirectory. Each file is a standalone finding with its own frontmatter — no separators needed:
 
 ```
 findings/
@@ -214,8 +214,6 @@ findings/
 ├── M-01.md
 └── I-01.md
 ```
-
-Each file follows the exact same format (optional YAML frontmatter + heading + content). No `---` separators needed between files.
 
 ---
 

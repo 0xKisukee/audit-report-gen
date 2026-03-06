@@ -216,12 +216,12 @@ function buildFindingsSection(findings) {
     const cfg = SEVERITY_CONFIG[sev] || {};
 
     const findingHtml = bySeverity[sev].map(f => {
-      // Strip the first heading and any trailing --- separator from the content
-      const contentWithoutHeading = f.content
-        .replace(/^#{1,4}\s+\[.+?\].+$/m, '')
+      // Strip the bold title line (already shown in the finding header) and any trailing --- separator
+      const contentWithoutTitle = f.content
+        .replace(/^\s*\*\*[^*\n]+\*\*\s*\n?/, '')
         .replace(/\n---+\s*$/, '')
         .trim();
-      const bodyHtml = styleSubsections(md(contentWithoutHeading));
+      const bodyHtml = styleSubsections(md(contentWithoutTitle));
       return `<div class="finding" id="finding-${f.id}">
         <div class="finding-header" style="border-left:4px solid ${cfg.color || '#ccc'}">
           <div class="finding-id-title">

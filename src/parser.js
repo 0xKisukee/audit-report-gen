@@ -32,8 +32,8 @@ function parseFrontmatter(text) {
 
 /**
  * Parse a single finding markdown chunk.
- * Supports optional YAML frontmatter at the top for status, affected-contracts, etc.
- * Extracts id, severity, title from the first heading: ### [H-1] Title
+ * Requires YAML frontmatter with a `severity` field (e.g. severity: [H-1] or H-1).
+ * The finding title is the first **bold** line in the body.
  */
 function parseFindingChunk(chunk) {
   const trimmed = chunk.trim();
@@ -41,19 +41,77 @@ function parseFindingChunk(chunk) {
 
   const { frontmatter, body } = parseFrontmatter(trimmed);
 
-  const headingMatch = body.match(/^#{1,4}\s+\[([A-Z])-(\d+)\]\s+(.+)/m);
-  if (!headingMatch) return null;
+  // Extract severity code and number from frontmatter: supports "[H-1]" or "H-1"
+  const severityRaw = (frontmatter.severity || '').trim();
+  const idMatch = severityRaw.match(/\[?([A-Z])-(\d+)\]?/);
+  if (!idMatch) return null;
 
-  const severityCode = headingMatch[1];
-  const number = headingMatch[2];
-  const title = headingMatch[3].trim();
+  const severityCode = idMatch[1];
+  const number = idMatch[2];
   const id = `${severityCode}-${number}`;
   const severity = SEVERITY_MAP[severityCode] || severityCode;
+
+  // Title is the first **bold-only** line in the body
+  const titleMatch = body.match(/^\s*\*\*([^*\n]+)\*\*\s*$/m);
+  if (!titleMatch) return null;
+  const title = titleMatch[1].trim();
 
   const status = frontmatter.status || 'Pending';
   const affectedContracts = frontmatter['affected-contracts'] || null;
 
   return { id, severity, title, status, affectedContracts, content: body };
+}
+
+/**
+ * Split a findings.md file into individual finding chunks.
+ * Each finding must start with a YAML frontmatter block (---).
+ * The start of the next frontmatter block acts as the separator between findings.
+ * A standalone --- line inside content that is immediately followed by a
+ * frontmatter key (word: value) is treated as the start of the next finding.
+ */
+function splitFindingChunks(content) {
+  const results = [];
+  const lines = content.split('\n');
+  let current = [];
+  // States: 'between' (waiting for a finding), 'in_frontmatter', 'in_content'
+  let state = 'between';
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    const nextTrimmed = i + 1 < lines.length ? lines[i + 1].trim() : '';
+
+    if (state === 'between') {
+      if (trimmed === '---') {
+        // Opening --- of a new finding's frontmatter
+        current.push(lines[i]);
+        state = 'in_frontmatter';
+      }
+      // Skip blank lines / separators between findings
+    } else if (state === 'in_frontmatter') {
+      current.push(lines[i]);
+      if (trimmed === '---') {
+        // Closing --- of frontmatter, switch to reading content
+        state = 'in_content';
+      }
+    } else { // in_content
+      // Detect a standalone --- that is the opening of the next finding's frontmatter.
+      // We recognise it by checking that the next non-empty line looks like a YAML key.
+      if (trimmed === '---' && /^[a-zA-Z][^:]*:/.test(nextTrimmed)) {
+        // Save the current finding, then start the new one with this --- line
+        results.push(current.join('\n'));
+        current = [lines[i]];
+        state = 'in_frontmatter';
+      } else {
+        current.push(lines[i]);
+      }
+    }
+  }
+
+  if (current.length > 0 && current.join('\n').trim()) {
+    results.push(current.join('\n'));
+  }
+
+  return results.filter(c => c.trim());
 }
 
 /**
@@ -79,9 +137,7 @@ function parseFindings(inputDir) {
     }
   } else if (fs.existsSync(findingsFile)) {
     const content = fs.readFileSync(findingsFile, 'utf8');
-    // Split just before each finding heading ### [X-N] or ## [X-N] etc.
-    // This handles both --- separators within a severity and bare headings at category boundaries.
-    const chunks = content.split(/(?=^#{1,4}\s+\[[A-Z]-\d+\])/m);
+    const chunks = splitFindingChunks(content);
     for (const chunk of chunks) {
       const finding = parseFindingChunk(chunk);
       if (finding) findings.push(finding);

@@ -256,9 +256,9 @@ pre code {
 }
 
 /* Diff highlighting */
-.diff-add  { color: #a6e3a1; display: block; }
-.diff-del  { color: #f38ba8; display: block; }
-.diff-hunk { color: #89b4fa; display: block; }
+.diff-add  { color: #a6e3a1; }
+.diff-del  { color: #f38ba8; }
+.diff-hunk { color: #89b4fa; }
 
 /* ── Scope list ───────────────────────────────────────────── */
 .scope-list {

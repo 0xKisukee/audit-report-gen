@@ -23,7 +23,7 @@ function parseFrontmatter(text) {
   if (!match) return { frontmatter: {}, body: text };
 
   const frontmatter = {};
-  for (const line of match[1].split('\n')) {
+  for (const line of match[1].split('\n').map(l => l.replace(/\r$/, ''))) {
     const kv = line.match(/^([^:]+):\s*(.+)$/);
     if (kv) frontmatter[kv[1].trim()] = kv[2].trim();
   }
@@ -51,8 +51,7 @@ function parseFindingChunk(chunk) {
   const id = `${severityCode}-${number}`;
   const severity = SEVERITY_MAP[severityCode] || severityCode;
 
-  // Title is the line immediately after the **Title** label
-  const titleMatch = body.match(/\*\*[Tt]itle\*\*\s*\n+([^\n*][^\n]*)/);
+  const titleMatch = body.match(/\*\*[Tt]itle:\*\*\s*\n+([^\n]+)/);
   if (!titleMatch) return null;
   const title = titleMatch[1].trim();
 

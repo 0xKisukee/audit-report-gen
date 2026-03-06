@@ -223,8 +223,10 @@ function buildFindingsSection(findings) {
     const cfg = SEVERITY_CONFIG[sev] || {};
 
     const findingHtml = bySeverity[sev].map(f => {
-      // Strip only trailing --- separators; **Title** label and text are kept and styled
-      const body = f.content.replace(/\n---+\s*$/, '').trim();
+      // Strip **Title** label + its text line, and trailing --- separators
+      const body = f.content
+        .replace(/\*\*[Tt]itle:?\*\*\s*\n+[^\n*][^\n]*\n?/, '')
+        .replace(/\n---+\s*$/, '').trim();
       const bodyHtml = styleSubsections(md(body));
       return `<div class="finding" id="finding-${f.id}">
         <div class="finding-header" style="border-left:4px solid ${cfg.color || '#ccc'}">

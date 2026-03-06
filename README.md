@@ -134,27 +134,26 @@ affected-contracts: PuppyRaffle.sol
 | `I`  | Informational |
 | `G`  | Gas           |
 
-### Title
+### Sub-section labels (auto-detected)
 
-The finding title is the **first bold line** in the body, written as `**Title text here**` on its own line. It will be shown in the finding card header and the summary table.
+All content inside a finding is organized with **bold labels** (`**Label**` on its own line) or markdown headings (`### Label`). The following labels are recognized and rendered as styled colored pills:
 
-### Sub-section headings (auto-detected)
+| Label                    | Style       |
+|--------------------------|-------------|
+| `Title`                  | Dark navy   |
+| `Description`            | Blue        |
+| `Detailed Description`   | Blue        |
+| `Impact`                 | Red         |
+| `Root Cause`             | Yellow      |
+| `Proof of Concept`       | Purple      |
+| `PoC`                    | Purple      |
+| `Recommended Mitigation` | Green       |
+| `Mitigation`             | Green       |
+| `Recommendation`         | Green       |
+| `Acknowledgement`        | Gray        |
+| `Acknowledgment`         | Gray        |
 
-The following sub-section names are automatically detected and rendered as styled labels. Use them as **bold paragraphs** (`**Description:**`) or **markdown headings** (`### Description`):
-
-| Label                    | Style  |
-|--------------------------|--------|
-| `Description`            | Blue   |
-| `Detailed Description`   | Blue   |
-| `Impact`                 | Red    |
-| `Root Cause`             | Yellow |
-| `Proof of Concept`       | Purple |
-| `PoC`                    | Purple |
-| `Recommended Mitigation` | Green  |
-| `Mitigation`             | Green  |
-| `Recommendation`         | Green  |
-| `Acknowledgement`        | Gray   |
-| `Acknowledgment`         | Gray   |
+`**Title**` is special: the line immediately after it becomes the finding title shown in the card header and summary table.
 
 ### Complete finding example
 
@@ -164,14 +163,13 @@ severity: [H-1]
 status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
-**Reentrancy in `refund` allows attacker to drain the contract**
+**Title**
+Reentrancy in `refund` allows attacker to drain the contract
 
 **Description:**
-
 The `refund` function sends ETH to `msg.sender` before zeroing the player slot...
 
 **Impact:**
-
 An attacker can drain the entire contract balance.
 
 **Proof of Concept:**
@@ -186,7 +184,6 @@ fallback() external payable {
 
 **Recommended Mitigation:**
 
-Apply the Checks-Effects-Interactions pattern:
 ```diff
 -   payable(msg.sender).sendValue(entranceFee);
     players[playerIndex] = address(0);
@@ -196,12 +193,12 @@ Apply the Checks-Effects-Interactions pattern:
 severity: [M-1]
 status: Pending
 ---
-**Next finding title here**
-
+**Title**
+Next finding title here
 ...
 ```
 
-> The `---` that separates findings doubles as the opening of the next finding's frontmatter block. No extra separator line is needed.
+> The `---` that starts the next frontmatter block also acts as the separator between findings. No extra line is needed.
 
 ### Using a `findings/` directory instead
 

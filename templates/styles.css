@@ -434,6 +434,7 @@ pre code {
   border-left: 3px solid;
 }
 
+.label-title        { background: #eef4fb; color: #1e3a5f; border-color: #1e3a5f; }
 .label-description { background: #eef5fb; color: #1e6fa8; border-color: #1e6fa8; }
 .label-impact       { background: #fdf0ef; color: #c0392b; border-color: #c0392b; }
 .label-root-cause   { background: #fef9e7; color: #b7950b; border-color: #b7950b; }

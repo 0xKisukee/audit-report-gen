@@ -3,7 +3,8 @@ severity: [H-1]
 status: Acknowledged
 affected-contracts: PuppyRaffle.sol
 ---
-**When a player asks for a refund, the `totalAmountCollected` variable is not reduced, causing contract insolvency**
+**Title**
+When a player asks for a refund, the `totalAmountCollected` variable is not reduced, causing contract insolvency
 
 **Description:**
 
@@ -70,7 +71,8 @@ severity: [H-2]
 status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
-**Refunding a user zeroes its address in the `players` array, causing a revert on all new entries when two or more users have refunded**
+**Title**
+Refunding a user zeroes its address in the `players` array, causing a revert on all new entries when two or more users have refunded
 
 **Description:**
 
@@ -137,7 +139,8 @@ severity: [H-3]
 status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
-**The `withdrawFees` function may always revert due to integer truncation dust, permanently locking protocol fees**
+**Title**
+The `withdrawFees` function may always revert due to integer truncation dust, permanently locking protocol fees
 
 **Description:**
 
@@ -179,7 +182,8 @@ severity: [H-4]
 status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
-**The `refund` function violates the Checks-Effects-Interactions pattern, enabling reentrancy to drain the contract**
+**Title**
+The `refund` function violates the Checks-Effects-Interactions pattern, enabling reentrancy to drain the contract
 
 **Description:**
 
@@ -222,7 +226,8 @@ severity: [M-1]
 status: Pending
 affected-contracts: PuppyRaffle.sol
 ---
-**Poor RNG implementation can be exploited by attackers to choose the winner**
+**Title**
+Poor RNG implementation can be exploited by attackers to choose the winner
 
 **Description:**
 
@@ -261,7 +266,8 @@ severity: [I-1]
 status: Acknowledged
 affected-contracts: PuppyRaffle.sol
 ---
-**The `_isActivePlayer` internal function is never used**
+**Title**
+The `_isActivePlayer` internal function is never used
 
 **Description:**
 

@@ -76,6 +76,7 @@ function statusBadge(status) {
 
 // Known finding sub-section labels and their CSS classes
 const SUBSECTION_LABELS = {
+  'title':                 { display: 'Title',                  cls: 'label-title' },
   'description':           { display: 'Description',           cls: 'label-description' },
   'detailed description':  { display: 'Description',           cls: 'label-description' },
   'impact':                { display: 'Impact',                 cls: 'label-impact' },
@@ -101,6 +102,12 @@ function styleSubsections(html) {
     const sub = SUBSECTION_LABELS[key];
     return sub ? `<div class="finding-subsection ${sub.cls}">${sub.display}</div>` : null;
   }
+
+  // Special case: **Title**\nTitle text with no blank line renders as a single <p>.
+  // Split it into a styled label div + a plain paragraph for the title text.
+  html = html.replace(/<p><strong>[Tt]itle<\/strong>\n([^<\n]+)<\/p>/gi, (match, titleText) => {
+    return `<div class="finding-subsection label-title">Title</div><p>${titleText.trim()}</p>`;
+  });
 
   // <h3> or <h4> matching a known label
   html = html.replace(/<h[34]>([^<]+)<\/h[34]>/gi, (match, label) => {
@@ -216,12 +223,9 @@ function buildFindingsSection(findings) {
     const cfg = SEVERITY_CONFIG[sev] || {};
 
     const findingHtml = bySeverity[sev].map(f => {
-      // Strip the bold title line (already shown in the finding header) and any trailing --- separator
-      const contentWithoutTitle = f.content
-        .replace(/^\s*\*\*[^*\n]+\*\*\s*\n?/, '')
-        .replace(/\n---+\s*$/, '')
-        .trim();
-      const bodyHtml = styleSubsections(md(contentWithoutTitle));
+      // Strip only trailing --- separators; **Title** label and text are kept and styled
+      const body = f.content.replace(/\n---+\s*$/, '').trim();
+      const bodyHtml = styleSubsections(md(body));
       return `<div class="finding" id="finding-${f.id}">
         <div class="finding-header" style="border-left:4px solid ${cfg.color || '#ccc'}">
           <div class="finding-id-title">

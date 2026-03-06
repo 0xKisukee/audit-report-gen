@@ -51,8 +51,8 @@ function parseFindingChunk(chunk) {
   const id = `${severityCode}-${number}`;
   const severity = SEVERITY_MAP[severityCode] || severityCode;
 
-  // Title is the first **bold-only** line in the body
-  const titleMatch = body.match(/^\s*\*\*([^*\n]+)\*\*\s*$/m);
+  // Title is the line immediately after the **Title** label
+  const titleMatch = body.match(/\*\*[Tt]itle\*\*\s*\n+([^\n*][^\n]*)/);
   if (!titleMatch) return null;
   const title = titleMatch[1].trim();
 

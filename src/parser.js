@@ -63,87 +63,22 @@ function parseFindingChunk(chunk) {
 }
 
 /**
- * Split a findings.md file into individual finding chunks.
- * Each finding must start with a YAML frontmatter block (---).
- * The start of the next frontmatter block acts as the separator between findings.
- * A standalone --- line inside content that is immediately followed by a
- * frontmatter key (word: value) is treated as the start of the next finding.
- */
-function splitFindingChunks(content) {
-  const results = [];
-  const lines = content.split('\n');
-  let current = [];
-  // States: 'between' (waiting for a finding), 'in_frontmatter', 'in_content'
-  let state = 'between';
-
-  for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    const nextTrimmed = i + 1 < lines.length ? lines[i + 1].trim() : '';
-
-    if (state === 'between') {
-      if (trimmed === '---') {
-        // Opening --- of a new finding's frontmatter
-        current.push(lines[i]);
-        state = 'in_frontmatter';
-      }
-      // Skip blank lines / separators between findings
-    } else if (state === 'in_frontmatter') {
-      current.push(lines[i]);
-      if (trimmed === '---') {
-        // Closing --- of frontmatter, switch to reading content
-        state = 'in_content';
-      }
-    } else { // in_content
-      // Detect a standalone --- that is the opening of the next finding's frontmatter.
-      // We recognise it by checking that the next non-empty line looks like a YAML key.
-      if (trimmed === '---' && /^[a-zA-Z][^:]*:/.test(nextTrimmed)) {
-        // Save the current finding, then start the new one with this --- line
-        results.push(current.join('\n'));
-        current = [lines[i]];
-        state = 'in_frontmatter';
-      } else {
-        current.push(lines[i]);
-      }
-    }
-  }
-
-  if (current.length > 0 && current.join('\n').trim()) {
-    results.push(current.join('\n'));
-  }
-
-  return results.filter(c => c.trim());
-}
-
-/**
- * Parse findings from a single markdown file (separated by `---` on its own line)
- * or from individual .md files in a directory.
+ * Parse findings from individual .md files in a findings/ directory.
  */
 function parseFindings(inputDir) {
   const findingsDir = path.join(inputDir, 'findings');
-  const findingsFile = path.join(inputDir, 'findings.md');
 
+  if (!fs.existsSync(findingsDir) || !fs.statSync(findingsDir).isDirectory()) {
+    throw new Error(`No findings directory found. Expected "${findingsDir}/".`);
+  }
+
+  const files = fs.readdirSync(findingsDir).filter(f => f.endsWith('.md')).sort();
   let findings = [];
 
-  if (fs.existsSync(findingsDir) && fs.statSync(findingsDir).isDirectory()) {
-    // Individual files: H-01.md, M-01.md, etc.
-    const files = fs.readdirSync(findingsDir)
-      .filter(f => f.endsWith('.md'))
-      .sort();
-
-    for (const file of files) {
-      const content = fs.readFileSync(path.join(findingsDir, file), 'utf8');
-      const finding = parseFindingChunk(content);
-      if (finding) findings.push(finding);
-    }
-  } else if (fs.existsSync(findingsFile)) {
-    const content = fs.readFileSync(findingsFile, 'utf8');
-    const chunks = splitFindingChunks(content);
-    for (const chunk of chunks) {
-      const finding = parseFindingChunk(chunk);
-      if (finding) findings.push(finding);
-    }
-  } else {
-    throw new Error(`No findings found. Expected "${findingsDir}/" directory or "${findingsFile}" file.`);
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(findingsDir, file), 'utf8');
+    const finding = parseFindingChunk(content);
+    if (finding) findings.push(finding);
   }
 
   // Sort by severity order then by number

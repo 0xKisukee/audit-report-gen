@@ -14,14 +14,34 @@ const SEVERITY_MAP = {
 const SEVERITY_ORDER = ['High', 'Medium', 'Low', 'Informational', 'Gas'];
 
 /**
+ * Parse optional YAML frontmatter from the top of a finding chunk.
+ * Supports simple key: value pairs only (no nested structures).
+ * Returns { frontmatter, body } where body is the markdown without the --- block.
+ */
+function parseFrontmatter(text) {
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!match) return { frontmatter: {}, body: text };
+
+  const frontmatter = {};
+  for (const line of match[1].split('\n')) {
+    const kv = line.match(/^([^:]+):\s*(.+)$/);
+    if (kv) frontmatter[kv[1].trim()] = kv[2].trim();
+  }
+  return { frontmatter, body: match[2] };
+}
+
+/**
  * Parse a single finding markdown chunk.
+ * Supports optional YAML frontmatter at the top for status, affected-contracts, etc.
  * Extracts id, severity, title from the first heading: ### [H-1] Title
  */
 function parseFindingChunk(chunk) {
   const trimmed = chunk.trim();
   if (!trimmed) return null;
 
-  const headingMatch = trimmed.match(/^#{1,4}\s+\[([A-Z])-(\d+)\]\s+(.+)/m);
+  const { frontmatter, body } = parseFrontmatter(trimmed);
+
+  const headingMatch = body.match(/^#{1,4}\s+\[([A-Z])-(\d+)\]\s+(.+)/m);
   if (!headingMatch) return null;
 
   const severityCode = headingMatch[1];
@@ -30,7 +50,10 @@ function parseFindingChunk(chunk) {
   const id = `${severityCode}-${number}`;
   const severity = SEVERITY_MAP[severityCode] || severityCode;
 
-  return { id, severity, title, content: trimmed };
+  const status = frontmatter.status || 'Pending';
+  const affectedContracts = frontmatter['affected-contracts'] || null;
+
+  return { id, severity, title, status, affectedContracts, content: body };
 }
 
 /**

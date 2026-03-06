@@ -1,6 +1,10 @@
+---
+status: Acknowledged
+affected-contracts: PuppyRaffle.sol
+---
 ### [H-1] When a player ask for a refund, the `totalAmountCollected` variable of the `selectWinner` function is not reduced, causing contract insolvency.
 
-**Detailed Description:**
+**Description:**
 
 When a player calls the `refund` function to get his money back, the `players` array's size stays the same. However, the prize pool is calculating with this formula:
 ```javascript
@@ -14,6 +18,10 @@ require(success, "PuppyRaffle: Failed to send prize pool to winner");
 ```
 
 This does mean that the funds are permanently locked in the contract. The only way to recover them is to send some Ether to the contract, to make its balance greater than or equal to the prize pool.
+
+**Impact:**
+
+Funds can be permanently locked in the contract, making the protocol insolvent after any refund.
 
 **Proof of Concept:**
 
@@ -71,10 +79,13 @@ address winner = players[winnerIndex];
 ```
 
 ---
-
+---
+status: Fixed
+affected-contracts: PuppyRaffle.sol
+---
 ### [H-2] Refunding a user is zeroing its address in the `players` array, causing a revert on all the next entries if two users or more got a refund.
 
-**Detailed Description:**
+**Description:**
 
 When a user is asking for a refund of his ticket, the `refund` function replaces its address by the zero address in the array, to remove his entry from the raffle. Thus, if multiple users ask for a refund in the same raffle, we will have multiple zero addresses in the array. However, when another user tries to participate to the raffle by calling the `enterRaffle` function, the contract is checking for any duplicate in the array, with this nested loop:
 
@@ -90,6 +101,10 @@ This loop will always revert because of the multiple zero addresses inside of th
 
 1. Users will not be able to enter a raffle where 2 players asked for a refund, causing a DoS until the `players` array is cleaned through the `selectWinner` function.
 2. If two participants the raffle ask for a refund before it reaches 4 players, the `selectWinner` will never be callable as needs 4 players or more to be called. The remaining player will have to call the refund function to get his funds back, and the contract will be permanently unusable.
+
+**Impact:**
+
+Denial of service on new raffle entries. In worst case the contract is permanently unusable.
 
 **Proof of Concept:**
 
@@ -142,7 +157,7 @@ function test_RaffleDoS() public {
 
 **Recommended Mitigation:**
 
-To mitigate this critical vulnerability, we advice the following changes on the `enterRaffle` function:
+To mitigate this vulnerability, we advice the following changes on the `enterRaffle` function:
 ```diff
 for (uint256 i = 0; i < players.length - 1; i++) {
 +   if (players[i] == address(0)) continue;
@@ -154,10 +169,13 @@ for (uint256 i = 0; i < players.length - 1; i++) {
 This will avoid checking for duplicates on zero addresses.
 
 ---
-
+---
+status: Fixed
+affected-contracts: PuppyRaffle.sol
+---
 ### [H-3] The `withdrawFees` function is implementing a require that may always revert because of dust, making the fees permanently lost and locked inside of the contract.
 
-**Detailed Description:**
+**Description:**
 
 When a user tries to call the `withdrawFees` function, the contract will go through a require trying to check if there are any active players. To achieve that, it checks if the remaining balance of the contract is strictly equal to the `totalFees` variable. But if we check how this variable is constructed, we can see that it's incremented on every raffle inside the `selectWinner` function:
 ```javascript
@@ -168,9 +186,13 @@ And if we check the value of fee, we get this:
 ```javascript
 uint256 fee = (totalAmountCollected * 20) / 100;
 ```
-This line may cause critical issues to the fees withdrawals, because it's a mathematical formula that may truncate its result. In fact the `totalAmountCollected` variable is multiplied by a decimal number (1/5). This does mean that if `totalAmountCollected` is not a multiple of 5, the resulting fee will be truncated by the EVM.
+This line may cause issues to the fees withdrawals, because it's a mathematical formula that may truncate its result. In fact the `totalAmountCollected` variable is multiplied by a decimal number (1/5). This does mean that if `totalAmountCollected` is not a multiple of 5, the resulting fee will be truncated by the EVM.
 It is the same situation for the `prizePool` formula, it may be truncated.
 Now the variables will always be lower than or equal to the actual amount on Ether sent to the contract. This mean that there will always be some remaining dust and this dust will make the `withdrawFees` function revert everytime on the first require.
+
+**Impact:**
+
+Protocol fees can be permanently locked in the contract, making the fee receiver unable to claim their revenue.
 
 **Proof of Concept:**
 
@@ -181,7 +203,7 @@ uint256 entranceFee = 1e18 + 1;
 
 **Recommended Mitigation:**
 
-To mitigate this critical vulnerability, we can track if there are active users with another method. Insted of checking if the balance is strictly equal to the claimable fees, we can verify if the `players` array length is 0:
+To mitigate this vulnerability, we can track if there are active users with another method. Instead of checking if the balance is strictly equal to the claimable fees, we can verify if the `players` array length is 0:
 ```diff
 function withdrawFees() external {
 -   require(address(this).balance == uint256(totalFees),
@@ -195,10 +217,13 @@ function withdrawFees() external {
 ```
 
 ---
-
+---
+status: Fixed
+affected-contracts: PuppyRaffle.sol
+---
 ### [H-4] The `refund` function is not following the Checks-Effects-Interactions pattern, leading to reentrancy vulnerability.
 
-**Detailed Description:**
+**Description:**
 
 The `refund` function is sending Ether to `msg.sender` before setting its address to zero in the `players` array. However, this is the only condition used by the `refund` function to check if a user already got refunded:
 ```javascript
@@ -206,6 +231,10 @@ require(playerAddress != address(0), "PuppyRaffle: Player already refunded, or i
 ```
 
 Now an attacker can use a malicious contract to call the `refund` function multiple times through a fallback function, letting him drain all the contract balance with reentrancy.
+
+**Impact:**
+
+An attacker can drain the entire contract balance via reentrancy.
 
 **Proof of Concept:**
 
@@ -225,7 +254,7 @@ function test_RaffleReentrancy() public playersEntered {
     maliciousContract.startAttack();
     maliciousContract.withdraw();
     vm.stopPrank();
-    
+
     uint256 balanceAfter = attackerOne.balance;
     assertEq(balanceAfter, balanceBefore + 5 * entranceFee);
 }
@@ -233,7 +262,7 @@ function test_RaffleReentrancy() public playersEntered {
 
 **Recommended Mitigation:**
 
-To mitigate this critical vulnerability, we need to respect the Checks-Effects-Interactions pattern. Inside of the `refund` function make these changes:
+To mitigate this vulnerability, we need to respect the Checks-Effects-Interactions pattern. Inside of the `refund` function make these changes:
 ```diff
 -   payable(msg.sender).sendValue(entranceFee);
 +   players[playerIndex] = address(0);
@@ -243,10 +272,9 @@ To mitigate this critical vulnerability, we need to respect the Checks-Effects-I
 ```
 
 ---
-
 ### [M-1] Poor RNG implementation can be exploited by attackers to choose the winner.
 
-**Detailed Description:**
+**Description:**
 
 The `selectWinner` function implements a RNG for the `winnerIndex` and for the `rarity`, using the hash of 3 global variable:
 ```javascript
@@ -260,7 +288,11 @@ These numbers can easily be predicted by anyone before the transaction to be bro
 
 This vulnerability is marked as Medium and not High because it is very unlikely in cases where there a lot of players taking part into the raffle. In fact, the `selectWinner` will be probably called right after the end of `raffleDuration`, and malicious actors will not have the time to wait for `block.timestamp` and `block.difficulty` to match his needs.
 
-However `block.difficulty` can probably be manipulated by Ethereum validators and in this case it would be a critical vulnerability.
+However `block.difficulty` can probably be manipulated by Ethereum validators and in this case it would be a high vulnerability.
+
+**Impact:**
+
+Malicious actors can manipulate raffle outcomes to guarantee winning, or farm rare NFTs.
 
 **Proof of Concept:**
 
@@ -277,7 +309,7 @@ Actors:
         // Save attackers' balance before they enter the raffle
         vm.deal(attackerOne, entranceFee * 2);
         uint256 balanceBefore = attackerOne.balance + attackerTwo.balance;
-        
+
         // Attackers enter the raffle
         vm.prank(attackerOne);
         puppyRaffle.enterRaffle{value: entranceFee * 2}(attackers);
@@ -291,7 +323,6 @@ Actors:
         uint256 attackerOneIndex = puppyRaffle.getActivePlayerIndex(attackerOne);
         uint256 attackerTwoIndex = puppyRaffle.getActivePlayerIndex(attackerTwo);
 
-        // Here 
         while (winnerIndex != attackerOneIndex && winnerIndex != attackerTwoIndex) {
             // Wait next block
             vm.roll(block.number + 1);
@@ -315,10 +346,9 @@ Actors:
 
 **Recommended Mitigation:**
 
-To generate a random number, the safest way is to use an external oracle.
+To generate a random number, the safest way is to use an external oracle such as Chainlink VRF.
 
 ---
-
 ### [I-1] The `_isActivePlayer` internal function is never used.
 
 This is consuming gas by increasing compiled code size.

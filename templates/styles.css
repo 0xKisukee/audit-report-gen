@@ -336,12 +336,12 @@ pre code {
 }
 
 .status-badge {
-  font-size: 8.5pt;
-  color: #e67e22;
-  background: #fef6ed;
-  border: 1px solid #e67e22;
+  font-size: 8pt;
+  font-weight: 600;
+  border: 1px solid;
   border-radius: 3px;
   padding: 0.15em 0.5em;
+  white-space: nowrap;
 }
 
 /* ── Finding Cards ────────────────────────────────────────── */
@@ -382,6 +382,13 @@ pre code {
   flex: 1;
 }
 
+.finding-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
 .finding-id {
   font-family: var(--font-mono);
   font-size: 9pt;
@@ -412,6 +419,27 @@ pre code {
 }
 
 .finding-body h3:first-child { margin-top: 0; }
+
+/* ── Finding Sub-section Labels ───────────────────────────── */
+.finding-subsection {
+  display: inline-block;
+  font-size: 8.5pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.25em 0.9em;
+  border-radius: 3px;
+  margin-top: 1.1rem;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid;
+}
+
+.label-description { background: #eef5fb; color: #1e6fa8; border-color: #1e6fa8; }
+.label-impact       { background: #fdf0ef; color: #c0392b; border-color: #c0392b; }
+.label-root-cause   { background: #fef9e7; color: #b7950b; border-color: #b7950b; }
+.label-poc          { background: #f4eeff; color: #6c3483; border-color: #6c3483; }
+.label-mitigation   { background: #eefbf3; color: #1e8449; border-color: #1e8449; }
+.label-ack          { background: #f5f6fa; color: #5d6d7e; border-color: #5d6d7e; }
 
 /* ── Highlight.js theme overrides (Catppuccin-inspired) ───── */
 .hljs-keyword  { color: #cba6f7; }

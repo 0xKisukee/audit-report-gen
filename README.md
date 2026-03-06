@@ -46,8 +46,7 @@ audit-report generate ./examples/puppy-raffle -o puppy-raffle-report.pdf
 ```
 my-audit/
 ├── metadata.json          # Required — report metadata
-├── findings.md            # Required (or use findings/ directory)
-├── findings/              # Alternative: one .md file per finding
+├── findings/              # Required — one .md file per finding
 │   ├── H-01.md
 │   ├── H-02.md
 │   └── M-01.md
@@ -100,13 +99,11 @@ my-audit/
 
 ---
 
-## findings.md — Finding Format
+## Finding Format
 
-Each finding is a YAML frontmatter block followed by its markdown content. Findings in a single `findings.md` file are separated by the start of the next finding's `---` frontmatter block.
+Each finding is a standalone `.md` file in the `findings/` directory. Filenames don't affect ordering — findings are always sorted by severity then by id number from the frontmatter.
 
 ### YAML Frontmatter (required)
-
-Every finding must start with a frontmatter block:
 
 ```yaml
 ---
@@ -115,8 +112,6 @@ status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
 ```
-
-**Frontmatter fields:**
 
 | Field                | Required | Values                                                                        |
 |----------------------|----------|-------------------------------------------------------------------------------|
@@ -134,9 +129,9 @@ affected-contracts: PuppyRaffle.sol
 | `I`  | Informational |
 | `G`  | Gas           |
 
-### Sub-section labels (auto-detected)
+### Sub-section labels
 
-All content inside a finding is organized with **bold labels** (`**Label**` on its own line) or markdown headings (`### Label`). The following labels are recognized and rendered as styled colored pills:
+Use `**Label**` on its own line (or `### Label`) to create styled section headers. Recognized labels:
 
 | Label                    | Style       |
 |--------------------------|-------------|
@@ -189,27 +184,6 @@ fallback() external payable {
     players[playerIndex] = address(0);
 +   payable(msg.sender).sendValue(entranceFee);
 ```
----
-severity: [M-1]
-status: Pending
----
-**Title**
-Next finding title here
-...
-```
-
-> The `---` that starts the next frontmatter block also acts as the separator between findings. No extra line is needed.
-
-### Using a `findings/` directory instead
-
-Create one `.md` file per finding in a `findings/` subdirectory. Each file is a standalone finding with its own frontmatter — no separators needed:
-
-```
-findings/
-├── H-01.md
-├── H-02.md
-├── M-01.md
-└── I-01.md
 ```
 
 ---

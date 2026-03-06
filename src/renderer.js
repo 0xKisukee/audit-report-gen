@@ -307,11 +307,8 @@ ${md(`
 `)}
 `;
 
-/**
- * Load CSS from templates/styles.css
- */
 function loadStyles() {
-  const cssPath = path.join(__dirname, '..', 'templates', 'styles.css');
+  const cssPath = path.join(__dirname, 'styles.css');
   return fs.readFileSync(cssPath, 'utf8');
 }
 

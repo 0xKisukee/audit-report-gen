@@ -20,10 +20,10 @@ program
   .command('generate', { isDefault: true })
   .description('Generate the PDF report')
   .argument('<input-dir>', 'Directory containing metadata.json, findings.md (or findings/), and optional section .md files')
-  .option('-o, --output <file>', 'Output PDF file path', 'report.pdf')
+  .option('-o, --output <file>', 'Output PDF file path')
   .action(async (inputDir, options) => {
     const absInput = path.resolve(inputDir);
-    const absOutput = path.resolve(options.output);
+    const absOutput = path.resolve(options.output || path.join(absInput, 'report.pdf'));
 
     if (!fs.existsSync(absInput)) {
       console.error(`Error: input directory not found: ${absInput}`);

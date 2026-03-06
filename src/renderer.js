@@ -60,6 +60,68 @@ function severityBadge(severity) {
   return `<span class="severity-badge" style="background:${cfg.bg};color:${cfg.color};border:1px solid ${cfg.color}">${cfg.badge}</span>`;
 }
 
+const STATUS_CONFIG = {
+  'Fixed':           { color: '#1e8449', bg: '#eefbf3' },
+  'Acknowledged':    { color: '#2980b9', bg: '#eef5fb' },
+  "Won't Fix":       { color: '#5d6d7e', bg: '#f5f6fa' },
+  'Partially Fixed': { color: '#e67e22', bg: '#fef6ed' },
+  'Pending':         { color: '#e67e22', bg: '#fef6ed' },
+};
+
+function statusBadge(status) {
+  const s = status || 'Pending';
+  const cfg = STATUS_CONFIG[s] || STATUS_CONFIG['Pending'];
+  return `<span class="status-badge" style="color:${cfg.color};background:${cfg.bg};border-color:${cfg.color}">${escapeHtml(s)}</span>`;
+}
+
+// Known finding sub-section labels and their CSS classes
+const SUBSECTION_LABELS = {
+  'title':                 { display: 'Title',                  cls: 'label-title' },
+  'description':           { display: 'Description',           cls: 'label-description' },
+  'detailed description':  { display: 'Description',           cls: 'label-description' },
+  'impact':                { display: 'Impact',                 cls: 'label-impact' },
+  'root cause':            { display: 'Root Cause',             cls: 'label-root-cause' },
+  'proof of concept':      { display: 'Proof of Concept',      cls: 'label-poc' },
+  'poc':                   { display: 'Proof of Concept',      cls: 'label-poc' },
+  'recommended mitigation':{ display: 'Recommended Mitigation',cls: 'label-mitigation' },
+  'mitigation':            { display: 'Recommended Mitigation',cls: 'label-mitigation' },
+  'recommendation':        { display: 'Recommended Mitigation',cls: 'label-mitigation' },
+  'acknowledgement':       { display: 'Acknowledgement',       cls: 'label-ack' },
+  'acknowledgment':        { display: 'Acknowledgement',       cls: 'label-ack' },
+};
+
+/**
+ * Post-process rendered finding HTML to style known sub-section headings.
+ * Detects:
+ *   - <h3>/<h4> elements matching known labels
+ *   - <p><strong>Label:</strong></p> paragraphs used as pseudo-headings
+ */
+function styleSubsections(html) {
+  function toSubsectionDiv(label) {
+    const key = label.trim().replace(/:$/, '').trim().toLowerCase();
+    const sub = SUBSECTION_LABELS[key];
+    return sub ? `<div class="finding-subsection ${sub.cls}">${sub.display}</div>` : null;
+  }
+
+  // Special case: **Title**\nTitle text with no blank line renders as a single <p>.
+  // Split it into a styled label div + a plain paragraph for the title text.
+  html = html.replace(/<p><strong>[Tt]itle<\/strong>\n([^<\n]+)<\/p>/gi, (match, titleText) => {
+    return `<div class="finding-subsection label-title">Title</div><p>${titleText.trim()}</p>`;
+  });
+
+  // <h3> or <h4> matching a known label
+  html = html.replace(/<h[34]>([^<]+)<\/h[34]>/gi, (match, label) => {
+    return toSubsectionDiv(label) || match;
+  });
+
+  // <p><strong>Label:</strong></p> — whole-paragraph bold used as a pseudo-heading
+  html = html.replace(/<p><strong>([^<]+?):?<\/strong><\/p>/gi, (match, label) => {
+    return toSubsectionDiv(label) || match;
+  });
+
+  return html;
+}
+
 function formatDate(metadata) {
   const d = metadata.date;
   if (!d) return '';
@@ -136,7 +198,7 @@ function buildFindingsSummaryTable(findings) {
       <td><a href="#finding-${f.id}"><code>[${f.id}]</code></a></td>
       <td>${escapeHtml(f.title)}</td>
       <td><span style="color:${cfg.color || 'inherit'}">${f.severity}</span></td>
-      <td><span class="status-badge">Pending</span></td>
+      <td>${statusBadge(f.status)}</td>
     </tr>`;
   });
 
@@ -161,21 +223,22 @@ function buildFindingsSection(findings) {
     const cfg = SEVERITY_CONFIG[sev] || {};
 
     const findingHtml = bySeverity[sev].map(f => {
-      // Strip the first heading and any trailing --- separator from the content
-      const contentWithoutHeading = f.content
-        .replace(/^#{1,4}\s+\[.+?\].+$/m, '')
-        .replace(/\n---+\s*$/, '')
-        .trim();
+      // Strip only trailing --- separators; **Title** label and text are kept and styled
+      const body = f.content.replace(/\n---+\s*$/, '').trim();
+      const bodyHtml = styleSubsections(md(body));
       return `<div class="finding" id="finding-${f.id}">
         <div class="finding-header" style="border-left:4px solid ${cfg.color || '#ccc'}">
           <div class="finding-id-title">
             <span class="finding-id">[${f.id}]</span>
             <span class="finding-title">${escapeHtml(f.title)}</span>
           </div>
-          ${severityBadge(f.severity)}
+          <div class="finding-header-right">
+            ${severityBadge(f.severity)}
+            ${statusBadge(f.status)}
+          </div>
         </div>
         <div class="finding-body">
-          ${md(contentWithoutHeading)}
+          ${bodyHtml}
         </div>
       </div>`;
     }).join('\n');
@@ -210,9 +273,9 @@ const RISK_MATRIX_HTML = `
   <tbody>
     <tr>
       <td class="risk-row-label">Likelihood: High</td>
-      <td>${riskBadge('Critical', '#7b1d1d', '#fce8e8')}</td>
-      <td>${riskBadge('High',     '#c0392b', '#fdf0ef')}</td>
-      <td>${riskBadge('Medium',   '#e67e22', '#fef6ed')}</td>
+      <td>${riskBadge('High',   '#c0392b', '#fdf0ef')}</td>
+      <td>${riskBadge('High',   '#c0392b', '#fdf0ef')}</td>
+      <td>${riskBadge('Medium', '#e67e22', '#fef6ed')}</td>
     </tr>
     <tr>
       <td class="risk-row-label">Likelihood: Medium</td>
@@ -330,7 +393,7 @@ function render(data) {
   <!-- DISCLAIMER -->
   <section id="disclaimer">
     <h1>Disclaimer</h1>
-    <p>${escapeHtml(disclaimerContent)}</p>
+    ${md(disclaimerContent)}
   </section>
 
   <!-- RISK CLASSIFICATION -->

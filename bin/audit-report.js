@@ -21,7 +21,6 @@ program
   .description('Generate the PDF report')
   .argument('<input-dir>', 'Directory containing metadata.json, findings.md (or findings/), and optional section .md files')
   .option('-o, --output <file>', 'Output PDF file path', 'report.pdf')
-  .option('--html', 'Also save the intermediate HTML (useful for debugging/styling)')
   .action(async (inputDir, options) => {
     const absInput = path.resolve(inputDir);
     const absOutput = path.resolve(options.output);
@@ -56,12 +55,6 @@ program
     } catch (err) {
       console.error(`Render error: ${err.message}`);
       process.exit(1);
-    }
-
-    if (options.html) {
-      const htmlPath = absOutput.replace(/\.pdf$/i, '') + '.html';
-      fs.writeFileSync(htmlPath, html, 'utf8');
-      console.log(`HTML saved to: ${htmlPath}`);
     }
 
     console.log(`Generating PDF: ${absOutput}`);

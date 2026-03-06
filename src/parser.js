@@ -14,57 +14,71 @@ const SEVERITY_MAP = {
 const SEVERITY_ORDER = ['High', 'Medium', 'Low', 'Informational', 'Gas'];
 
 /**
+ * Parse optional YAML frontmatter from the top of a finding chunk.
+ * Supports simple key: value pairs only (no nested structures).
+ * Returns { frontmatter, body } where body is the markdown without the --- block.
+ */
+function parseFrontmatter(text) {
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!match) return { frontmatter: {}, body: text };
+
+  const frontmatter = {};
+  for (const line of match[1].split('\n')) {
+    const kv = line.match(/^([^:]+):\s*(.+)$/);
+    if (kv) frontmatter[kv[1].trim()] = kv[2].trim();
+  }
+  return { frontmatter, body: match[2] };
+}
+
+/**
  * Parse a single finding markdown chunk.
- * Extracts id, severity, title from the first heading: ### [H-1] Title
+ * Requires YAML frontmatter with a `severity` field (e.g. severity: [H-1] or H-1).
+ * The finding title is the first **bold** line in the body.
  */
 function parseFindingChunk(chunk) {
   const trimmed = chunk.trim();
   if (!trimmed) return null;
 
-  const headingMatch = trimmed.match(/^#{1,4}\s+\[([A-Z])-(\d+)\]\s+(.+)/m);
-  if (!headingMatch) return null;
+  const { frontmatter, body } = parseFrontmatter(trimmed);
 
-  const severityCode = headingMatch[1];
-  const number = headingMatch[2];
-  const title = headingMatch[3].trim();
+  // Extract severity code and number from frontmatter: supports "[H-1]" or "H-1"
+  const severityRaw = (frontmatter.severity || '').trim();
+  const idMatch = severityRaw.match(/\[?([A-Z])-(\d+)\]?/);
+  if (!idMatch) return null;
+
+  const severityCode = idMatch[1];
+  const number = idMatch[2];
   const id = `${severityCode}-${number}`;
   const severity = SEVERITY_MAP[severityCode] || severityCode;
 
-  return { id, severity, title, content: trimmed };
+  // Title is the line immediately after the **Title** label
+  const titleMatch = body.match(/\*\*[Tt]itle\*\*\s*\n+([^\n*][^\n]*)/);
+  if (!titleMatch) return null;
+  const title = titleMatch[1].trim();
+
+  const status = frontmatter.status || 'Pending';
+  const affectedContracts = frontmatter['affected-contracts'] || null;
+
+  return { id, severity, title, status, affectedContracts, content: body };
 }
 
 /**
- * Parse findings from a single markdown file (separated by `---` on its own line)
- * or from individual .md files in a directory.
+ * Parse findings from individual .md files in a findings/ directory.
  */
 function parseFindings(inputDir) {
   const findingsDir = path.join(inputDir, 'findings');
-  const findingsFile = path.join(inputDir, 'findings.md');
 
+  if (!fs.existsSync(findingsDir) || !fs.statSync(findingsDir).isDirectory()) {
+    throw new Error(`No findings directory found. Expected "${findingsDir}/".`);
+  }
+
+  const files = fs.readdirSync(findingsDir).filter(f => f.endsWith('.md')).sort();
   let findings = [];
 
-  if (fs.existsSync(findingsDir) && fs.statSync(findingsDir).isDirectory()) {
-    // Individual files: H-01.md, M-01.md, etc.
-    const files = fs.readdirSync(findingsDir)
-      .filter(f => f.endsWith('.md'))
-      .sort();
-
-    for (const file of files) {
-      const content = fs.readFileSync(path.join(findingsDir, file), 'utf8');
-      const finding = parseFindingChunk(content);
-      if (finding) findings.push(finding);
-    }
-  } else if (fs.existsSync(findingsFile)) {
-    const content = fs.readFileSync(findingsFile, 'utf8');
-    // Split just before each finding heading ### [X-N] or ## [X-N] etc.
-    // This handles both --- separators within a severity and bare headings at category boundaries.
-    const chunks = content.split(/(?=^#{1,4}\s+\[[A-Z]-\d+\])/m);
-    for (const chunk of chunks) {
-      const finding = parseFindingChunk(chunk);
-      if (finding) findings.push(finding);
-    }
-  } else {
-    throw new Error(`No findings found. Expected "${findingsDir}/" directory or "${findingsFile}" file.`);
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(findingsDir, file), 'utf8');
+    const finding = parseFindingChunk(content);
+    if (finding) findings.push(finding);
   }
 
   // Sort by severity order then by number

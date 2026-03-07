@@ -1,8 +1,8 @@
 {
   "protocol": "PuppyRaffle",
   "protocolType": "Raffle / NFT",
-  "logo": "logo.svg",
-  "auditors": ["Fuzz755"],
+  "logo": "logo.png",
+  "auditors": ["fuzz755"],
   "date": {
     "from": "2026-03-01",
     "to": "2026-03-03"

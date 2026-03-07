@@ -371,7 +371,7 @@ function render(data) {
 <div class="cover-page">
   ${logoHtml}
   <div class="cover-content">
-    <div class="cover-tag">Security Audit Report</div>
+    <div class="cover-tag">Public Audit Release</div>
     <h1 class="cover-title">${escapeHtml(metadata.protocol || 'Protocol')} Security Review</h1>
     ${auditors ? `<p class="cover-subtitle">by ${escapeHtml(auditors)}</p>` : ''}
   </div>

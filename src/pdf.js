@@ -32,9 +32,9 @@ async function generatePdf(html, outputPath) {
         <div style="
           width: 100%;
           height: 20mm;
-          font-size: 9px;
+          font-size: 12px;
           font-family: 'Inter', sans-serif;
-          color: #999;
+          color: #1a1a2e;
           display: flex;
           align-items: center;
           justify-content: center;

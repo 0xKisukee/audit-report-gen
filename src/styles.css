@@ -7,11 +7,11 @@
 :root {
   --color-text:       #1a1a2e;
   --color-muted:      #64748b;
-  --color-border:     #e2e8f0;
+  --color-border:     #e7e2f0;
   --color-bg:         #ffffff;
-  --color-bg-code:    #f8fafc;
-  --color-accent:     #1e3a5f;
-  --color-accent-light: #eef4fb;
+  --color-bg-code:    #f9f8fc;
+  --color-accent:     #161616;
+  --color-accent-light: #e0dce6;
   --font-sans:        'Inter', system-ui, sans-serif;
   --font-mono:        'JetBrains Mono', 'Fira Code', monospace;
   --radius:           6px;
@@ -39,7 +39,7 @@ a:hover { text-decoration: underline; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(160deg, var(--color-accent) 0%, #0f2744 100%);
+  background: linear-gradient(160deg, #0d0718 0%, var(--color-accent) 100%);
   color: #fff;
   padding: 40mm 30mm;
   gap: 2rem;

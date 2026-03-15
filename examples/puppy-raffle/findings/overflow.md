@@ -3,12 +3,10 @@ severity: [H-6]
 status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
-**Title:**
-
+### Title
 Overflow can cause a permanent loss of fees
 
-**Description:**
-
+### Description
 Everytime the `selectWinner` function is called, the `totalFees` variable is incremented:
 ```javascript
 uint256 fee = (totalAmountCollected * 20) / 100;
@@ -16,8 +14,7 @@ totalFees = totalFees + uint64(fee);
 ```
 The `fee` variable is an `uint256` casted to an `uint64`. This cast is not safe because the value can be higher than 2^64, which would lead to an overflow. Now everytime the `totalFees` exceed 2^64, it will reset to 0, causing a permanent funds loss.
 
-**Proof of Concept:**
-
+### Proof of Concept
 Actors:
 - Players: Normal players entering the raffle.
 
@@ -50,7 +47,6 @@ function test_FeeOverflow() public {
 }
 ```
 
-**Recommended Mitigation:**
-
+### Recommended Mitigation
 We advice the protocol to use a newer version of Solidity to handle overflows and revert.
 An even better solution would be remove the cast to `uint64` as it is useless.

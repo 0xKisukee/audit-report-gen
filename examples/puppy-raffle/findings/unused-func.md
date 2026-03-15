@@ -3,14 +3,11 @@ severity: [I-1]
 status: Acknowledged
 affected-contracts: PuppyRaffle.sol
 ---
-**Title:**
-
+### Title
 The `_isActivePlayer` internal function is never used
 
-**Description**
-
+### Description
 This is consuming gas by increasing compiled code size.
 
-**Recommended Mitigation:**
-
+### Recommended Mitigation
 Delete this function.

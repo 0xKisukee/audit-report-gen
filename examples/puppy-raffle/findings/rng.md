@@ -3,12 +3,10 @@ severity: [M-1]
 status: Pending
 affected-contracts: PuppyRaffle.sol
 ---
-**Title:**
-
+### Title
 Poor RNG implementation can be exploited by attackers to choose the winner
 
-**Description:**
-
+### Description
 The `selectWinner` function implements a RNG for the `winnerIndex` and for the `rarity`, using the hash of 3 global variable:
 ```javascript
 uint256 winnerIndex =
@@ -23,12 +21,10 @@ This vulnerability is marked as Medium and not High because it is very unlikely 
 
 However `block.difficulty` can probably be manipulated by Ethereum validators and in this case it would be a critical vulnerability.
 
-**Impact:**
-
+### Impact
 Malicious actors can manipulate raffle outcomes to guarantee winning and farm rare NFTs.
 
-**Proof of Concept:**
-
+### Proof of Concept
 Actors:
 - Attackers: Malicious users exploiting the poor RNG.
 
@@ -78,6 +74,5 @@ Actors:
     }
 ```
 
-**Recommended Mitigation:**
-
+### Recommended Mitigation
 To generate a random number, the safest way is to use an external oracle.

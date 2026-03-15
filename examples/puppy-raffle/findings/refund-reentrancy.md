@@ -3,11 +3,11 @@ severity: [H-4]
 status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
-**Title:**
+### Title
 
 The `refund` function is not following the Checks-Effects-Interactions pattern, leading to reentrancy vulnerability
 
-**Description:**
+### Description
 
 The `refund` function is sending Ether to `msg.sender` before setting its address to zero in the `players` array. However, this is the only condition used by the `refund` function to check if a user already got refunded:
 ```javascript
@@ -16,11 +16,11 @@ require(playerAddress != address(0), "PuppyRaffle: Player already refunded, or i
 
 Now an attacker can use a malicious contract to call the `refund` function multiple times through a fallback function, letting him drain all the contract balance with reentrancy.
 
-**Impact:**
+### Impact
 
 An attacker can drain the entire contract balance via reentrancy.
 
-**Proof of Concept:**
+### Proof of Concept
 
 Actors:
 - Attacker: Malicious players deploying a contract to drain contract funds.
@@ -44,7 +44,7 @@ function test_RaffleReentrancy() public playersEntered {
 }
 ```
 
-**Recommended Mitigation:**
+### Recommended Mitigation
 
 To mitigate this critical vulnerability, we need to respect the Checks-Effects-Interactions pattern. Inside of the `refund` function make these changes:
 ```diff

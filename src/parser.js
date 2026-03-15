@@ -33,7 +33,7 @@ function parseFrontmatter(text) {
 /**
  * Parse a single finding markdown chunk.
  * Requires YAML frontmatter with a `severity` field (e.g. severity: [H-1] or H-1).
- * The finding title is the first **bold** line in the body.
+ * The finding title is the line after the first `# Title` heading in the body.
  */
 function parseFindingChunk(chunk) {
   const trimmed = chunk.trim();
@@ -51,7 +51,7 @@ function parseFindingChunk(chunk) {
   const id = `${severityCode}-${number}`;
   const severity = SEVERITY_MAP[severityCode] || severityCode;
 
-  const titleMatch = body.match(/\*\*[Tt]itle:\*\*\s*\n+([^\n]+)/);
+  const titleMatch = body.match(/^#{1,6}\s+[Tt]itle\s*\n+([^\n]+)/m);
   if (!titleMatch) return null;
   const title = titleMatch[1].trim();
 

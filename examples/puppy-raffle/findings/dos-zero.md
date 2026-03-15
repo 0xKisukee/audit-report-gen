@@ -3,12 +3,10 @@ severity: [H-2]
 status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
-**Title:**
-
+### Title
 Refunding a user zeroes its address in the `players` array, causing a revert on all new entries when two or more users have refunded
 
-**Description:**
-
+### Description
 When a user is asking for a refund of his ticket, the `refund` function replaces its address by the zero address in the array, to remove his entry from the raffle. Thus, if multiple users ask for a refund in the same raffle, we will have multiple zero addresses in the array. However, when another user tries to participate to the raffle by calling the `enterRaffle` function, the contract is checking for any duplicate in the array, with this nested loop:
 
 ```javascript
@@ -24,12 +22,10 @@ This loop will always revert because of the multiple zero addresses inside of th
 1. Users will not be able to enter a raffle where 2 players asked for a refund, causing a DoS until the `players` array is cleaned through the `selectWinner` function.
 2. If two participants the raffle ask for a refund before it reaches 4 players, the `selectWinner` will never be callable as needs 4 players or more to be called. The remaining player will have to call the refund function to get his funds back, and the contract will be permanently unusable.
 
-**Impact:**
-
+### Impact
 Denial of service on new raffle entries. In the worst case the contract is permanently unusable.
 
-**Proof of Concept:**
-
+### Proof of Concept
 Actors:
 - Players: Normal players entering the raffle.
 - Attackers: Malicious players entering the raffle to create a DoS.
@@ -77,8 +73,7 @@ function test_RaffleDoS() public {
 }
 ```
 
-**Recommended Mitigation:**
-
+### Recommended Mitigation
 To mitigate this critical vulnerability, we advice the following changes on the `enterRaffle` function:
 ```diff
 for (uint256 i = 0; i < players.length - 1; i++) {

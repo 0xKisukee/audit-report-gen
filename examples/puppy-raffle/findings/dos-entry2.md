@@ -3,12 +3,10 @@ severity: [M-2]
 status: Fixed
 affected-contracts: PuppyRaffle.sol
 ---
-**Title:**
-
+### Title
 The total amount of player inside a raffle is limited
 
-**Description:**
-
+### Description
 When a single users is joining a raffle by calling the `enterRaffle` function, his address is added to the `players` list. This call doesn't cost much gas.
 However, the duplicates checking loop, will go through all the existing players of the list to check if the new player already exists.
 For every new player entering the raffle, the cost will be higher, leading to 2 issues:
@@ -16,8 +14,7 @@ For every new player entering the raffle, the cost will be higher, leading to 2 
 - At some point, users will not be able to enter the raffle because the transaction gas cost will be too high.
 After some tests, we found that the maximum total amount of players that can enter the raffle is .
 
-**Proof of Concept:**
-
+### Proof of Concept
 Actors:
 - Players: Normal players entering the raffle.
 - Last Player: Normal player that can not enter the raffle.
@@ -59,7 +56,6 @@ function test_NoPlayerCanEnter() public {
 }
 ```
 
-**Recommended Mitigation:**
-
+### Recommended Mitigation
 We should remove the duplicate check loop. In Ethereum blockchain, people can create as many addresses as they want. So if they want to enter multiple times the raffle, they will still be able to anyway.
 Another advice would be to use mappings instead of arrays.

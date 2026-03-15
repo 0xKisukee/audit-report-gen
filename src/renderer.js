@@ -92,9 +92,7 @@ const SUBSECTION_LABELS = {
 
 /**
  * Post-process rendered finding HTML to style known sub-section headings.
- * Detects:
- *   - <h3>/<h4> elements matching known labels
- *   - <p><strong>Label:</strong></p> paragraphs used as pseudo-headings
+ * Detects heading elements (h1-h6) matching known labels.
  */
 function styleSubsections(html) {
   function toSubsectionDiv(label) {
@@ -103,19 +101,8 @@ function styleSubsections(html) {
     return sub ? `<div class="finding-subsection ${sub.cls}">${sub.display}</div>` : null;
   }
 
-  // Special case: **Title**\nTitle text with no blank line renders as a single <p>.
-  // Split it into a styled label div + a plain paragraph for the title text.
-  html = html.replace(/<p><strong>[Tt]itle<\/strong>\n([^<\n]+)<\/p>/gi, (match, titleText) => {
-    return `<div class="finding-subsection label-title">Title</div><p>${titleText.trim()}</p>`;
-  });
-
-  // <h3> or <h4> matching a known label
-  html = html.replace(/<h[34]>([^<]+)<\/h[34]>/gi, (match, label) => {
-    return toSubsectionDiv(label) || match;
-  });
-
-  // <p><strong>Label:</strong></p> — whole-paragraph bold used as a pseudo-heading
-  html = html.replace(/<p><strong>([^<]+?):?<\/strong><\/p>/gi, (match, label) => {
+  // Headings matching a known label
+  html = html.replace(/<h[1-6]>([^<]+)<\/h[1-6]>/gi, (match, label) => {
     return toSubsectionDiv(label) || match;
   });
 
@@ -225,7 +212,7 @@ function buildFindingsSection(findings) {
     const findingHtml = bySeverity[sev].map(f => {
       // Strip **Title** label + its text line, and trailing --- separators
       const body = f.content
-        .replace(/\*\*[Tt]itle:?\*\*\s*\n+[^\n*][^\n]*\n?/, '')
+        .replace(/^#{1,6}\s+[Tt]itle\s*\n+[^\n#][^\n]*\n?/m, '')
         .replace(/\n---+\s*$/, '').trim();
       const bodyHtml = styleSubsections(md(body));
       return `<div class="finding" id="finding-${f.id}">

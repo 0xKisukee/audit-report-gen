@@ -3,12 +3,10 @@ severity: [H-1]
 status: Acknowledged
 affected-contracts: PuppyRaffle.sol
 ---
-**Title:**
-
+### Title
 When a player asks for a refund, the `totalAmountCollected` variable is not reduced, causing contract insolvency
 
-**Description:**
-
+### Description
 When a player calls the `refund` function to get his money back, the `players` array's size stays the same. However, the prize pool is calculating with this formula:
 ```javascript
 totalAmountCollected = players.length * entranceFee
@@ -22,12 +20,10 @@ require(success, "PuppyRaffle: Failed to send prize pool to winner");
 
 This does mean that the funds are permanently locked in the contract. The only way to recover them is to send some Ether to the contract, to make its balance greater than or equal to the prize pool.
 
-**Impact:**
-
+### Impact
 Funds can be permanently locked in the contract, making the protocol insolvent after any refund.
 
-**Proof of Concept:**
-
+### Proof of Concept
 Actors:
 - Players: Normal players entering the raffle.
 
@@ -63,8 +59,7 @@ Notice: Sometimes the `selectWinner` function may work even if the contract is i
 require(address(this).balance == uint256(totalFees), "PuppyRaffle: There are currently players active!");
 ```
 
-**Recommended Mitigation:**
-
+### Recommended Mitigation
 Track the zero addresses inside of the players array. Make these changes inside of the `selectWinner` function:
 
 ```diff
